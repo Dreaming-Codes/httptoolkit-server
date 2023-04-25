@@ -16,7 +16,7 @@ export class MessageServer {
     private messageSeen = getDeferred();
 
     async start() {
-        this.server = getLocal({ https: this.config.https, cors: true });
+        this.server = getLocal({ https: this.config.https, cors: false });
         await this.server.start(EPHEMERAL_PORT_RANGE);
 
         await this.server.forGet('/')
