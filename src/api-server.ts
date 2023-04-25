@@ -2,6 +2,8 @@ import _ from 'lodash';
 import * as os from 'os';
 import * as events from 'events';
 import express from 'express';
+import cors from 'cors';
+import corsGate from 'cors-gate';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { GraphQLScalarType } from 'graphql';
 import { graphqlHTTP } from 'express-graphql';
@@ -288,6 +290,26 @@ export class HttpToolkitServerApi extends events.EventEmitter {
             }
             next(null);
         });
+
+        this.server.use(cors({
+            origin: ALLOWED_ORIGINS,
+            maxAge: 86400 // Cache this result for as long as possible
+        }));
+
+        this.server.use(corsGate(
+            ENABLE_PLAYGROUND
+            // When the debugging playground is enabled, we're slightly more lax
+            ? {
+                strict: true,
+                allowSafe: true,
+                origin: 'http://localhost:45457'
+            }
+            : {
+                strict: true, // MUST send an allowed origin
+                allowSafe: false, // Even for HEAD/GET requests (should be none anyway)
+                origin: '' // No origin - we accept *no* same-origin requests
+            }
+        ));
 
         this.server.use((req, res, next) => {
             if (req.method !== 'POST' && !ENABLE_PLAYGROUND) {
